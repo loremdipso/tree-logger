@@ -1,0 +1,22 @@
+[package]
+name = "tree-logger"
+version = "0.1.0"
+edition = "2024"
+description = "Simple yet feature-full logging and profile tool"
+homepage = "https://github.com/loremdipso/cli-status-board"
+readme = "CARGO_README.md"
+license = "MIT"
+keywords = ["logging"]
+
+[dependencies]
+ansi_term = "0.12.1"
+colored = "2.1.0"
+log = { version = "0.4.22", features = [
+    "max_level_trace",
+    "release_max_level_trace",
+    "kv",
+    "std",
+] }
+rustc-hash = "2.1.0"
+strip-ansi-escapes = "0.2.0"
+termsize = "0.1.9"
