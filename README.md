@@ -5,14 +5,18 @@ Log and profile nested code. Supports multi-threading.
 ## Basic usage
 
 ```rust
-use tree_logger::TreeLogger;
+use tree_logger::{TreeLogger, profile};
 
 TreeLogger::new()
     .with_colors(true)
     .with_threads(true)
     .init()
     .unwrap();
+
 log::warn!("This is an example message.");
+profile!("Some parent span", || {
+    log::info!("Hello from inside the parent span!");
+});
 ```
 
 ## Output example
