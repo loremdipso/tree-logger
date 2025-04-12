@@ -167,6 +167,12 @@ impl LoggingData {
     }
 }
 
+impl Default for TreeLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TreeLogger {
     /// Initializes the global logger with a CustomLogger instance with
     /// default log level set to `Level::Trace`.
