@@ -13,6 +13,7 @@ pub struct TreeLogger {
     threads_enabled: bool,
     colors_enabled: bool,
     use_stderr: bool,
+    filter_fn: fn(&LoggingEvent) -> bool,
     data: LoggingData,
 }
 
@@ -30,15 +31,15 @@ struct InternalLoggingData {
 }
 
 #[derive(Debug, Clone)]
-struct LoggingEvent {
-    id: Option<usize>,
-    indentation: usize,
-    elapsed: Option<u128>,
-    level: Level,
-    target: String,
-    args: String,
-    thread: String,
-    quiet: bool,
+pub struct LoggingEvent {
+    pub id: Option<usize>,
+    pub indentation: usize,
+    pub elapsed: Option<u128>,
+    pub level: Level,
+    pub target: String,
+    pub args: String,
+    pub thread: String,
+    pub quiet: bool,
 }
 
 impl LoggingEvent {
@@ -191,6 +192,7 @@ impl TreeLogger {
             threads_enabled: false,
             colors_enabled: false,
             use_stderr: false,
+            filter_fn: |_| true,
             data: LoggingData::default(),
         }
     }
@@ -198,6 +200,12 @@ impl TreeLogger {
     pub fn init(self) -> Result<(), SetLoggerError> {
         log::set_max_level(self.max_level());
         log::set_boxed_logger(Box::new(self))
+    }
+
+    #[must_use = "You must call init() to begin logging"]
+    pub fn with_filter_fn(mut self, filter_fn: fn(&LoggingEvent) -> bool) -> TreeLogger {
+        self.filter_fn = filter_fn;
+        self
     }
 
     #[must_use = "You must call init() to begin logging"]
@@ -240,12 +248,20 @@ impl TreeLogger {
     }
 
     fn print_data(&self, data: Vec<LoggingEvent>) {
-        let terminal_width = termsize::get().unwrap_or(Size { rows: 0, cols: 0 }).cols as usize;
+        if data.len() == 0 {
+            return;
+        }
+
+        if !(self.filter_fn)(&data[0]) {
+            return;
+        }
+
         if data.len() == 1 && data[0].quiet && data[0].elapsed.unwrap_or(u128::MAX) == 0 {
             return;
         }
 
-        for record in data {
+        let terminal_width = termsize::get().unwrap_or(Size { rows: 0, cols: 0 }).cols as usize;
+        for record in data.iter().filter(|e| (self.filter_fn)(e)) {
             let left = format!(
                 "{} {:indent$}{}",
                 self.get_level_string(record.level),
