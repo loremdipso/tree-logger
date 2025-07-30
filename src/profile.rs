@@ -8,7 +8,13 @@ use crate::constants;
 
 static ID: AtomicUsize = AtomicUsize::new(0);
 
-pub fn profile_core<L, F, T>(label: L, location: &'static str, func: F, quiet: bool) -> T
+pub fn profile_core<L, F, T>(
+    label: L,
+    location: &'static str,
+    func: F,
+    level: log::Level,
+    quiet: bool,
+) -> T
 where
     L: Display,
     F: FnOnce() -> T,
@@ -21,7 +27,7 @@ where
     );
     log::logger().log(
         &Record::builder()
-            .level(log::Level::Info)
+            .level(level)
             .key_values(&[
                 (constants::ID, id),
                 (constants::QUIET, if quiet { 1 } else { 0 }),
@@ -73,14 +79,32 @@ where
 ///
 #[macro_export]
 macro_rules! profile {
+    ($label:expr, $func:expr, $level:expr) => {
+        tree_logger::profile::profile_core($label, file!(), $func, $level, false)
+    };
     ($label:expr, $func:expr) => {
-        tree_logger::profile::profile_core($label, file!(), $func, false)
+        tree_logger::profile::profile_core($label, file!(), $func, log::Level::Info, false)
     };
 }
 
 #[macro_export]
 macro_rules! profile_quiet {
-    ($label:literal, $func:expr) => {
-        tree_logger::profile::profile_core($label, file!(), $func, true)
+    ($label:literal, $func:expr, $level:expr) => {
+        tree_logger::profile::profile_core($label, file!(), $func, $level, true)
     };
+    ($label:literal, $func:expr) => {
+        tree_logger::profile::profile_core($label, file!(), $func, log::Level::Info, true)
+    };
+}
+
+#[cfg(test)]
+mod test {
+    use crate as tree_logger;
+    use crate::profile;
+
+    #[test]
+    fn logging_works() {
+        profile!("test", || {});
+        profile!("test", || {}, log::Level::Error);
+    }
 }

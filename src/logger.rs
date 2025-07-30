@@ -344,11 +344,11 @@ impl Log for TreeLogger {
     fn flush(&self) {}
 }
 
-#[cfg(test)]
-mod test {
-    // use super::*;
+// #[cfg(test)]
+// mod test {
+//     // use super::*;
 
-    // TODO: how to test?
-    #[test]
-    fn test_module_levels_denylist() {}
-}
+//     // TODO: how to test?
+//     #[test]
+//     fn test_module_levels_denylist() {}
+// }
