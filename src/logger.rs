@@ -164,7 +164,7 @@ impl LoggingData {
                 }
             }
         }
-        eprintln!("Couldn't set time!");
+        // eprintln!("Couldn't set time!");
     }
 }
 
