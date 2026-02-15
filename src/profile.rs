@@ -97,10 +97,10 @@ macro_rules! profile {
 
 #[macro_export]
 macro_rules! profile_quiet {
-    ($label:literal, $func:expr, $level:expr) => {
+    ($label:expr, $func:expr, $level:expr) => {
         tree_logger::profile::profile_core_with_level($label, file!(), $func, $level, true)
     };
-    ($label:literal, $func:expr) => {
+    ($label:expr, $func:expr) => {
         tree_logger::profile::profile_core($label, file!(), $func, true)
     };
 }
@@ -108,11 +108,12 @@ macro_rules! profile_quiet {
 #[cfg(test)]
 mod test {
     use crate as tree_logger;
-    use crate::profile;
+    use crate::{profile, profile_quiet};
 
     #[test]
     fn logging_works() {
         profile!("test", || {});
         profile!("test", || {}, log::Level::Error);
+        profile_quiet!("test", || {}, log::Level::Error);
     }
 }
