@@ -108,12 +108,11 @@ macro_rules! profile_quiet {
 #[cfg(test)]
 mod test {
     use crate as tree_logger;
-    use crate::{profile, profile_quiet};
 
     #[test]
-    fn logging_works() {
-        profile!("test", || {});
-        profile!("test", || {}, log::Level::Error);
-        profile_quiet!("test", || {}, log::Level::Error);
+    fn logging_compiles() {
+        crate::profile!("test", || {});
+        crate::profile!("test", || {}, log::Level::Error);
+        crate::profile_quiet!("test", || {}, log::Level::Error);
     }
 }

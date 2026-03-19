@@ -2,7 +2,16 @@
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use rustc_hash::FxHashMap;
-use std::sync::{Arc, Mutex};
+use std::{
+    fs::File,
+    io::Write,
+    path::Path,
+    sync::{
+        Arc, Mutex,
+        mpsc::{Sender, channel},
+    },
+    thread,
+};
 use strip_ansi_escapes::strip;
 use termsize::Size;
 
@@ -15,6 +24,7 @@ pub struct TreeLogger {
     use_stderr: bool,
     filter_fn: fn(&LoggingEvent) -> bool,
     data: LoggingData,
+    maybe_sender: Option<Sender<String>>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -194,6 +204,7 @@ impl TreeLogger {
             use_stderr: false,
             filter_fn: |_| true,
             data: LoggingData::default(),
+            maybe_sender: None,
         }
     }
 
@@ -211,6 +222,37 @@ impl TreeLogger {
     #[must_use = "You must call init() to begin logging"]
     pub fn with_level(mut self, level: LevelFilter) -> TreeLogger {
         self.default_level = level;
+        self
+    }
+
+    #[must_use = "You must call init() to begin logging"]
+    pub fn with_file<T: AsRef<Path>>(mut self, path: T, append: bool) -> TreeLogger {
+        if self.maybe_sender.is_some() {
+            panic!("Can't set file more than once");
+        }
+
+        // TODO: is this reasonable?
+        let (sender, receiver) = channel::<String>();
+        thread::spawn({
+            let mut file = if append {
+                File::options()
+                    .write(true)
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .unwrap()
+            } else {
+                File::create(path).unwrap()
+            };
+
+            move || {
+                while let Ok(value) = receiver.recv() {
+                    _ = writeln!(file, "{}", value);
+                }
+            }
+        });
+
+        self.maybe_sender = Some(sender);
         self
     }
 
@@ -287,6 +329,10 @@ impl TreeLogger {
                 left
             };
 
+            if let Some(sender) = &self.maybe_sender {
+                _ = sender.send(message.clone());
+            }
+
             if self.use_stderr {
                 eprintln!("{}", message);
             } else {
@@ -346,9 +392,17 @@ impl Log for TreeLogger {
 
 // #[cfg(test)]
 // mod test {
-//     // use super::*;
+//     use super::*;
 
-//     // TODO: how to test?
 //     #[test]
-//     fn test_module_levels_denylist() {}
+//     fn file_works() {
+//         TreeLogger::new()
+//             .with_colors(true)
+//             .with_threads(true)
+//             .with_file("/tmp/logger.txt", true /* append */)
+//             .init()
+//             .unwrap();
+//         log::info!("Did this work?");
+//         log::info!("Yes it did!");
+//     }
 // }
