@@ -58,9 +58,9 @@ impl LoggingEvent {
         match self.elapsed {
             Some(elapsed) => {
                 if elapsed > 100 {
-                    format!("{}: {}", self.args, Red.paint(format!("{elapsed}ms")))
+                    format!("{}: {}", self.args, Red.paint(humanize_ms(elapsed)))
                 } else {
-                    format!("{}: {}", self.args, Cyan.paint(format!("{elapsed}ms")))
+                    format!("{}: {}", self.args, Cyan.paint(humanize_ms(elapsed)))
                 }
             }
             None => self.args.clone(),
@@ -390,19 +390,43 @@ impl Log for TreeLogger {
     fn flush(&self) {}
 }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
+pub fn humanize_ms(ms: u128) -> String {
+    match ms {
+        60_000.. => {
+            format!("{}min", ms / 60_000)
+        }
+        1000..60_000 => {
+            format!("{}sec", ms / 1000)
+        }
+        0..1000 => {
+            format!("{}ms", ms)
+        }
+    }
+}
 
-//     #[test]
-//     fn file_works() {
-//         TreeLogger::new()
-//             .with_colors(true)
-//             .with_threads(true)
-//             .with_file("/tmp/logger.txt", true /* append */)
-//             .init()
-//             .unwrap();
-//         log::info!("Did this work?");
-//         log::info!("Yes it did!");
-//     }
-// }
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn humanize_tests() {
+        assert_eq!(humanize_ms(10), "10ms");
+        assert_eq!(humanize_ms(500), "500ms");
+        assert_eq!(humanize_ms(1000), "1sec");
+        assert_eq!(humanize_ms(10_000), "10sec");
+        assert_eq!(humanize_ms(59_000), "59sec");
+        assert_eq!(humanize_ms(60_000), "1min");
+    }
+
+    // #[test]
+    // fn file_works() {
+    //     TreeLogger::new()
+    //         .with_colors(true)
+    //         .with_threads(true)
+    //         .with_file("/tmp/logger.txt", true /* append */)
+    //         .init()
+    //         .unwrap();
+    //     log::info!("Did this work?");
+    //     log::info!("Yes it did!");
+    // }
+}
