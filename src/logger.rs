@@ -4,7 +4,7 @@ use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use rustc_hash::FxHashMap;
 use std::{
     fs::File,
-    io::Write,
+    io::{self, IsTerminal, Write},
     path::Path,
     sync::{
         Arc, Mutex,
@@ -25,6 +25,7 @@ pub struct TreeLogger {
     filter_fn: fn(&LoggingEvent) -> bool,
     data: LoggingData,
     maybe_sender: Option<Sender<String>>,
+    is_terminal: bool,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -205,6 +206,7 @@ impl TreeLogger {
             filter_fn: |_| true,
             data: LoggingData::default(),
             maybe_sender: None,
+            is_terminal: io::stdout().is_terminal(),
         }
     }
 
@@ -336,7 +338,10 @@ impl TreeLogger {
             if self.use_stderr {
                 eprintln!("{}", message);
             } else {
-                println!("{}", message);
+                // Only print if this is a terminal
+                if self.is_terminal {
+                    println!("{}", message);
+                }
             }
         }
     }
