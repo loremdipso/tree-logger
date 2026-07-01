@@ -271,6 +271,12 @@ impl TreeLogger {
         self
     }
 
+    /// True to use stderr instead of stdout (default).
+    pub fn with_stderr(mut self) -> TreeLogger {
+        self.use_stderr = true;
+        self
+    }
+
     pub fn max_level(&self) -> LevelFilter {
         self.default_level
     }
